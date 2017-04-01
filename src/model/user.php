@@ -76,7 +76,7 @@ class user extends activeRecord {
         self::connect();
         $sql = "SELECT * FROM users WHERE id=:id";
         $stmt = self::$db->conn->prepare($sql);
-        $stmt->execute(['id' => $id]);
+        $result= $stmt->execute(['id' => $id]);
         if ($result && $stmt->rowCount() == 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $loadedUser = new User();

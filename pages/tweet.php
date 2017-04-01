@@ -1,25 +1,20 @@
 <?php
-require_once('./autoloader.php');
+require_once '../autoloader.php';
 session_start();
 
-//dodaje sesje ponieważ przenoszę dane uzytkownika po zalogowaniu 
 $userSelected = null;
+$tweet = null;
 if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
     $userSelected = user::loadById($_SESSION['id']);
+} else {
+    header('Refresh: 1; url= ../index.php');
 }
-//odbieram dane z fromularza i zapisuje do bazy danych 
 
-if ($userSelected != null) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (!empty($_POST['tweet'])) {
-
-            $tweet = new tweet();
-            $tweet->setUserId($_SESSION['id']);
-            $tweet->setText($_POST['tweet']);
-            $tweet->save();
-        } else {
-            
-        }
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (!empty($_GET['id'])) {
+        $tweet = tweet::loadById($_GET['id']);
+    } else {
+        echo "Podałeś błędne Id";
     }
 }
 ?>
@@ -76,59 +71,32 @@ if ($userSelected != null) {
             </div>
         </header>
         <hr>
-        <?php
-        if ($userSelected != null) {
-            ?>
-            <div class="container">
-                <div class="row">
-                    <div class="col-sm-8">
-
-                    </div>
-                    <div class="col-sm-8">
-                        <form action="index.php" method="POST" role="form" >
-                            <label for="tweet">Tweet:</label>
-                            <input type="text"  class="form-control" name="tweet" id="tweet" maxlength="140"
-                                   placeholder="Write your tweet.....">                  
-                            <button type="submit" class="btn btn-success">Send</button>
-                        </form>
-                    </div>
-                    <div class="col-sm-8">
-
-                    </div>
-                </div>
-            </div>    
-        <?php } ?>   
-        <hr>
 
         <div class="container">
             <div class="row">
-                <div class="col-sm-12">
-                    <h3>All yours tweets</h3>
+                <div class="col-sm-10">
+                    <h2>Tweet</h2>
                 </div>
                 <div class="col-sm-10 ">
-                    <table class="table table-hover">
-                        <?php
-                        if ($userSelected != null) {
-                            $allLoadedTweets = tweet::loadAll();
+                    <?php
+                    if ($tweet != null) {
+                        echo "<table class='table table-hover'>";
+                        $author = user::loadById($tweet->getUserId());
+                        echo "<tr><th>Author: ". $author->getUsername().""." </th><th>E-mail: ".$author->getEmail()."</th><th>Date: ".$tweet->getCreationDate()."</th></tr>";
+                        echo "<tr><td colspan='3'>". $tweet->getText()."</td></tr>";
+                        
+                    }
+                    echo "</table>";
+                    ?> 
 
-                            foreach ($allLoadedTweets as $tweet) {
-                                $user = user::loadById($tweet->getUserId());
-                                echo "<tr><th><a href='pages/profile.php?id=" . $user->getId() . "'>" . $user->getUsername() . "</a></th><th>" . $user->getEmail() . "</th></tr>";
-
-                                echo "<tr><td><a href='pages/tweet.php?id=" . $tweet->getId() . "'>Tweet: " . $tweet->getText() . "</a></td><td>" . $tweet->getCreationDate() . "</td></tr>";
-                            }
-                        }
-                        ?> 
-                    </table>
                 </div>
-                <div class="col-sm-4">
-
+                <div class="col-sm-10">
+                    <a href="../index.php"><button type="" class="btn btn-success">Powrót</button></a>
                 </div>
             </div>
-        </div>    
-
-
+        </div>      
         <hr>
+
         <footer>
             <div class="container">
                 <div class="row">

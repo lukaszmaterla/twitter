@@ -113,9 +113,16 @@ if ($userSelected != null) {
 
                             foreach ($allLoadedTweets as $tweet) {
                                 $user = user::loadById($tweet->getUserId());
-                                echo "<tr><th><a href='pages/profile.php?id=" . $user->getId() . "'>" . $user->getUsername() . "</a></th><th>" . $user->getEmail() . "</th></tr>";
+                                echo "<tr>"
+                                . "<th><a href='pages/profile.php?id=" . $user->getId() . "'>" . $user->getUsername() . "</a></th>"
+                                . "<th>" . $user->getEmail() . "</th>"
+                                . "</tr>";
 
-                                echo "<tr><td><a href='pages/tweet.php?id=" . $tweet->getId() . "'>Tweet: " . $tweet->getText() . "</a></td><td>" . $tweet->getCreationDate() . "</td></tr>";
+                                echo
+                                "<tr>"
+                                . "<td><a href='pages/tweet.php?id=" . $tweet->getId() . "'>Tweet: " . $tweet->getText() . "</a></td>"
+                                . "<td>" . $tweet->getCreationDate() . "</td>"
+                                . "</tr>";
                             }
                         }
                         ?> 

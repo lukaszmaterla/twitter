@@ -13,12 +13,30 @@ if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (!empty($_GET['id'])) {
         $tweet = tweet::loadById($_GET['id']);
+        if ($tweet == true) {
+
+            $_SESSION['tweetPostId'] = $_GET['id'];
+        }
+    } else {
+        echo "Podałeś błędne Id";
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($_SESSION['tweetPostId'] && $userSelected) {
+
+        $tweet = tweet::loadById($_SESSION['tweetPostId']);
+        if (!empty($_POST['comment'])) {
+            $newComment = new comment();
+            $newComment->setUserId($_SESSION['id']);
+            $newComment->setPostId($_SESSION['tweetPostId']);
+            $newComment->setText($_POST['comment']);
+            $newComment->save();
+        }
     } else {
         echo "Podałeś błędne Id";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -82,13 +100,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     if ($tweet != null) {
                         echo "<table class='table table-hover'>";
                         $author = user::loadById($tweet->getUserId());
-                        echo "<tr><th>Author: ". $author->getUsername().""." </th><th>E-mail: ".$author->getEmail()."</th><th>Date: ".$tweet->getCreationDate()."</th></tr>";
-                        echo "<tr><td colspan='3'>". $tweet->getText()."</td></tr>";
-                        
-                    }
-                    echo "</table>";
-                    ?> 
+                        echo
+                        "<tr>"
+                        . "<th>Author: " . $author->getUsername() . "" . " </th>"
+                        . "<th>E-mail: " . $author->getEmail() . "</th>"
+                        . "</tr>";
+                        echo
+                        "<tr>"
+                        . "<td>" . $tweet->getText() . "</td>"
+                        . "<td>" . $tweet->getCreationDate() . "</td>"
+                        . "</tr>";
+                        echo "</table>";
+                        ?> 
 
+                    </div>
+                    <div class="col-sm-6 ">
+                        <form action="tweet.php" method="POST" role="form" >
+                            <label for="comment">Write your comment:</label>
+                            <input type="text"  class="form-control" name="comment" id="comment" maxlength="60"
+                                   placeholder="Write your comment.....">                  
+                            <button type="submit" class="btn btn-success">Send</button>
+                        </form>
+                    </div>
+                    <div class="col-sm-10 ">
+                        <?php
+                        echo "<table class='table table-hover'>";
+
+                        $allComments = comment::loadAllByPostId($_SESSION['tweetPostId']);
+
+                        if ($allComments != null) {
+                            foreach ($allComments as $comment) {
+                                $commentAuthor = user::loadById($comment->getUserId());
+                                echo
+                                "<tr>"
+                                . "<th>" . $commentAuthor->getUsername() . "</a></th>"
+                                . "<th>" . $commentAuthor->getEmail() . "</th>"
+                                . "</tr>";
+
+                                echo
+                                "<tr>"
+                                . "<td>" . $comment->getText() . "</a></td>"
+                                . "<td>" . $comment->getCreationDate() . "</td>"
+                                . "</tr>";
+                            }
+                        } else {
+                            echo
+                            "<tr>"
+                            . "<td>Brak komentarzy. Dodaj jako pierwszy... </td>"
+                            . "</tr>";
+                        }
+
+                        echo "</table>";
+                    }
+                    ?> 
                 </div>
                 <div class="col-sm-10">
                     <a href="../index.php"><button type="" class="btn btn-success">Powrót</button></a>

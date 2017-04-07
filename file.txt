@@ -25,3 +25,15 @@
 	PRIMARY KEY (id),
 	FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (postId) REFERENCES tweets(id) ON DELETE CASCADE );
+
+        CREATE table messages(
+        `id` int NOT NULL AUTO_INCREMENT,
+        `senderId` int NOT NULL,
+        `receiverId` int NOT NULL,
+        `textMessage` varchar(200),
+        `status` tinyint(1) DEFAULT 0, 
+        `creationDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        FOREIGN KEY (senderId) REFERENCES users(id),
+        FOREIGN KEY (receiverId) REFERENCES users(id)
+        );

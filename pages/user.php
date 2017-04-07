@@ -1,41 +1,42 @@
 <?php
-require_once '../autoloader.php';
+require_once('../autoloader.php');
 session_start();
 
 $userSelected = null;
-$tweet = null;
 if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
     $userSelected = user::loadById($_SESSION['id']);
 } else {
     echo "Nie jesteś zalogowany. Zaloguj się ";
-    header('Refresh: 2; url= ../index.php');
+    header('Refresh: 1; url = ../index.php');
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (!empty($_GET['id'])) {
-        $tweet = tweet::loadById($_GET['id']);
-        if ($tweet == true) {
 
-            $_SESSION['tweetPostId'] = $_GET['id'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+    if (!empty($_GET['id'])) {
+        $user = user::loadById($_GET['id']);
+        if (!empty($user)) {
+            $_SESSION['receiverId'] = $user->getId();
+        } else {
+
+            echo "Brak usera o takim id";
         }
-    } else {
-        echo "Podałeś błędne Id";
     }
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_SESSION['tweetPostId'] && $userSelected) {
 
-        $tweet = tweet::loadById($_SESSION['tweetPostId']);
-        if (!empty($_POST['comment'])) {
-            $newComment = new comment();
-            $newComment->setUserId($_SESSION['id']);
-            $newComment->setPostId($_SESSION['tweetPostId']);
-            $newComment->setText($_POST['comment']);
-            $newComment->save();
+    if (!empty($_POST['message'])) {
+        $newMessage = new message();
+        $newMessage->setSenderId($userSelected->getId());
+        $newMessage->setReceiverId($_SESSION['receiverId']);
+        $newMessage->setTextMessage($_POST['message']);
+        $result = $newMessage->save();
+        if ($result) {
+            $_SESSION['send'] = true;
+            header("Refresh:0 url= messages.php");
         }
-    } else {
-        echo "Podałeś błędne Id";
     }
 }
 ?>
@@ -44,12 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" con                                      tent="width=device-width, initial-scale=1">
         <meta name="description" content="">
         <meta name="author" content="">
 
         <title>Twitter</title>
         <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
     </head>
     <body>
         <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -99,74 +101,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </nav>
         <div class= "jumbotron">
-            <div class="container text-center">
-                <h2>Tweet</h2>
+            <div class="container page-header text-center">
+                <h2>All Tweets selected by user</h2>
             </div>
         </div>
+
         <div class="container">
             <div class="row">
-                <div class="col-sm-offset-2 col-sm-8 ">
+                <div class="col-sm-8">
                     <?php
-                    if ($tweet != null) {
-                        echo "<table class='table table-hover'>";
-                        $author = user::loadById($tweet->getUserId());
-                        echo
-                        "<tr>"
-                        . "<th>Author: " . $author->getUsername() . "" . " </th>"
-                        . "<th>E-mail: " . $author->getEmail() . "</th>"
-                        . "</tr>";
-                        echo
-                        "<tr>"
-                        . "<td>" . $tweet->getText() . "</td>"
-                        . "<td>" . $tweet->getCreationDate() . "</td>"
-                        . "</tr>";
-                        echo "</table>";
-                        ?> 
-                    </div>
-                    <div class="col-sm-offset-2 col-sm-8 ">
-                        <form action="tweet.php" method="POST" role="form" >
-                            <label for="comment">Write your comment:</label>
-                            <input type="text"  class="form-control" name="comment" id="comment" maxlength="60"
-                                   placeholder="Write your comment....."><br>                 
-                            <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-comment"></span> Send</button>
-                        </form>
-                    </div>
-                    <div class="col-sm-offset-2 col-sm-8 ">
-                        <?php
-                        echo "<table class='table table-hover'>";
-                        $allComments = comment::loadAllByPostId($_SESSION['tweetPostId']);
-                        if ($allComments != null) {
-                            foreach ($allComments as $comment) {
-                                $commentAuthor = user::loadById($comment->getUserId());
-                                echo
-                                "<tr>"
-                                . "<th>" . $commentAuthor->getUsername() . "</a></th>"
-                                . "<th>" . $commentAuthor->getEmail() . "</th>"
-                                . "</tr>";
-
-                                echo
-                                "<tr>"
-                                . "<td>" . $comment->getText() . "</a></td>"
-                                . "<td>" . $comment->getCreationDate() . "</td>"
-                                . "</tr>";
-                            }
-                        } else {
+                    if (!empty($user)) {
+                        echo "<p>All Users tweets: " . $user->getUsername() . "</p>";
+                        echo "<p>Email: " . $user->getEmail() . "</p>";
+                        echo " <table class='table table-hover'>";
+                        //var_dump($user);
+                        $allTweets = tweet::loadAllByUserId($user->getId());
+                        foreach ($allTweets as $tweet) {
                             echo
                             "<tr>"
-                            . "<td>No comments, feel free to be first... </td>"
+                            . "<td><a href='tweet.php?id=" . $tweet->getId() . "'>" . $tweet->getText() . "</a></td>"
+                            . "<td>" . $tweet->getCreationDate() . "</td>"
                             . "</tr>";
                         }
-
                         echo "</table>";
                     }
-                    ?> 
+                    ?>             
                 </div>
-                <div class="col-sm-offset-2 col-sm-8">
-                    <a href="../index.php"><button type="" class="btn btn-success"><span class="glyphicon glyphicon-hand-left"></span> Back</button></a>
-                </div>
+                <?php
+                if (!empty($user)) {
+                    echo "<div class='col-sm-4'>";
+                    if ($user->getId() !== $userSelected->getId() && !empty($user->getId())) {
+                        ?>
+                        <form action="" method="POST" role="form" >
+                            <label for="message">Send a message<?php $user->getUsername() ?></label>
+                            <textarea rows="4" cols="50" class="form-control" name="message" id="message"placeholder="Write your message...."></textarea><br>                  
+                            <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-send"></span> Send</button>
+                        </form> 
+                        <?php
+                    }
+                    echo " </div>";
+                }
+                ?>                                      
             </div>
-            <hr>
-        </div>  
+        </div>    
+        <hr>
         <footer>
             <div class="container">
                 <div class="row">
@@ -176,6 +154,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </footer>
-
     </body>
 </html>

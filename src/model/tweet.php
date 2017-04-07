@@ -124,16 +124,18 @@ class tweet extends activeRecord {
         $sql = "SELECT * FROM tweets WHERE userId=:id ORDER BY creationDate DESC";
         $stmt = self::$db->conn->prepare($sql);
         $result = $stmt->execute(['id' => $id]);
-        if ($result && $stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $loadedTweet = new User();
-            $loadedTweet->id = $row['id'];
-            $loadedTweet->username = $row['username'];
-            $loadedTweet->passwordHash = $row['passwordHash'];
-            $loadedTweet->email = $row['email'];
-            return $loadedTweet;
+        $returnTable = [];
+        if ($result !== null && $stmt->rowCount() > 0) {
+            foreach ($stmt as $row) {
+                $loadedTweet = new tweet();
+                $loadedTweet->id = $row['id'];
+                $loadedTweet->userId = $row['userId'];
+                $loadedTweet->text = $row['text'];
+                $loadedTweet->creationDate = $row['creationDate'];
+                $returnTable[] = $loadedTweet;
+            }
         }
-        return null;
+        return $returnTable;
     }
 
     public function delete() {

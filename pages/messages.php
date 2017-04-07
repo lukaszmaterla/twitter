@@ -1,41 +1,25 @@
 <?php
-require_once '../autoloader.php';
+require_once('../autoloader.php');
 session_start();
 
 $userSelected = null;
-$tweet = null;
 if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
     $userSelected = user::loadById($_SESSION['id']);
 } else {
-    echo "Nie jesteś zalogowany. Zaloguj się ";
-    header('Refresh: 2; url= ../index.php');
-    exit;
+    echo "Please Login ";
+    header('Refresh: 0; url = ../index.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
     if (!empty($_GET['id'])) {
-        $tweet = tweet::loadById($_GET['id']);
-        if ($tweet == true) {
-
-            $_SESSION['tweetPostId'] = $_GET['id'];
+        $messageInfo = message::loadById($_GET['id']);
+        $messageSender = user::loadById($messageInfo->getSenderId());
+        $messageReceiver = user::loadById($messageInfo->getReceiverId());
+        $result = $messageInfo->getId();
+        if (!empty($result)) {
+            $_SESSION['messageId'] = $result;
         }
-    } else {
-        echo "Podałeś błędne Id";
-    }
-}
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_SESSION['tweetPostId'] && $userSelected) {
-
-        $tweet = tweet::loadById($_SESSION['tweetPostId']);
-        if (!empty($_POST['comment'])) {
-            $newComment = new comment();
-            $newComment->setUserId($_SESSION['id']);
-            $newComment->setPostId($_SESSION['tweetPostId']);
-            $newComment->setText($_POST['comment']);
-            $newComment->save();
-        }
-    } else {
-        echo "Podałeś błędne Id";
     }
 }
 ?>
@@ -47,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="">
         <meta name="author" content="">
-
         <title>Twitter</title>
         <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
     </head>
     <body>
         <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -99,74 +83,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </nav>
         <div class= "jumbotron">
-            <div class="container text-center">
-                <h2>Tweet</h2>
+            <div class="container page-header text-center">
+                <h2> Messages</h2>
             </div>
         </div>
         <div class="container">
             <div class="row">
-                <div class="col-sm-offset-2 col-sm-8 ">
+                <div class="col-sm-8">
                     <?php
-                    if ($tweet != null) {
-                        echo "<table class='table table-hover'>";
-                        $author = user::loadById($tweet->getUserId());
-                        echo
-                        "<tr>"
-                        . "<th>Author: " . $author->getUsername() . "" . " </th>"
-                        . "<th>E-mail: " . $author->getEmail() . "</th>"
-                        . "</tr>";
-                        echo
-                        "<tr>"
-                        . "<td>" . $tweet->getText() . "</td>"
-                        . "<td>" . $tweet->getCreationDate() . "</td>"
-                        . "</tr>";
-                        echo "</table>";
-                        ?> 
-                    </div>
-                    <div class="col-sm-offset-2 col-sm-8 ">
-                        <form action="tweet.php" method="POST" role="form" >
-                            <label for="comment">Write your comment:</label>
-                            <input type="text"  class="form-control" name="comment" id="comment" maxlength="60"
-                                   placeholder="Write your comment....."><br>                 
-                            <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-comment"></span> Send</button>
-                        </form>
-                    </div>
-                    <div class="col-sm-offset-2 col-sm-8 ">
-                        <?php
-                        echo "<table class='table table-hover'>";
-                        $allComments = comment::loadAllByPostId($_SESSION['tweetPostId']);
-                        if ($allComments != null) {
-                            foreach ($allComments as $comment) {
-                                $commentAuthor = user::loadById($comment->getUserId());
-                                echo
-                                "<tr>"
-                                . "<th>" . $commentAuthor->getUsername() . "</a></th>"
-                                . "<th>" . $commentAuthor->getEmail() . "</th>"
-                                . "</tr>";
+                    if (!empty($_SESSION['messageId']) && !empty($messageInfo)) {
+                        echo "<p>Wiamodość od " . $messageSender->getUsername() . "</p>";
+                        echo "<div class='col-sm-8'>" . $messageInfo->getTextMessage() . "</div>";
+                        if ($userSelected->getId() !== $messageInfo->getSenderId()) {
+                            $messageInfo->setStatus(1);
+                        }
+                        $messageInfo->save();
+                        $_SESSION['messageId'] = null;
+                    }
+                    ?>
+                </div>
+            </div>  
+        </div>  
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    <?php
+                    if (!empty($userSelected)) {
+                        echo "<h3>Received messages:</h3><br>";
+                        echo " <table class='table table-hover'>";
+                        $allReceivedMessages = message::loadAllByReceiverId($userSelected->getId());
+                        if (!empty($allReceivedMessages)) {
+
+                            foreach ($allReceivedMessages as $receivedMessage) {
+                                $senderUser = user::loadById($receivedMessage->getReceiverId());
+                                //var_dump($senderUser);
+                                $status = ($receivedMessage->getStatus() == 1) ? 'read' : 'unread';
+                                echo "<tr><th><a href='user.php?id=" . $senderUser->getId() . "'>" . $senderUser->getUsername() . "</a></th><th>" . $receivedMessage->getCreationDate() . "</th><tr>";
 
                                 echo
                                 "<tr>"
-                                . "<td>" . $comment->getText() . "</a></td>"
-                                . "<td>" . $comment->getCreationDate() . "</td>"
+                                . "<td><a href='messages.php?id=" . $receivedMessage->getId() . "'>" . substr($receivedMessage->getTextMessage(), 0, 30) . " ..." . "</a></td><td>" . $status . "</td>"
                                 . "</tr>";
                             }
                         } else {
-                            echo
-                            "<tr>"
-                            . "<td>No comments, feel free to be first... </td>"
-                            . "</tr>";
+                            echo "Your message box is empty";
                         }
-
                         echo "</table>";
                     }
-                    ?> 
+                    ?>             
                 </div>
-                <div class="col-sm-offset-2 col-sm-8">
-                    <a href="../index.php"><button type="" class="btn btn-success"><span class="glyphicon glyphicon-hand-left"></span> Back</button></a>
+                <div class="col-sm-6">
+                    <?php
+                    if (!empty($userSelected)) {
+                        echo "<h3>Send messages:</h3><br>";
+                        echo " <table class='table table-hover'>";
+
+                        $allSenddMessages = message::loadAllBySenderId($userSelected->getId());
+                        if (!empty($allSenddMessages)) {
+                            foreach ($allSenddMessages as $sendMessage) {
+                                $reciverUser = user::loadById($sendMessage->getSenderId());
+                                $status = ($sendMessage->getStatus() == 1) ? 'read' : 'unread';
+                                echo "<tr><th><a href='user.php?id=" . $reciverUser->getId() . "'>" . $reciverUser->getUsername() . "</a></th><th>" . $sendMessage->getCreationDate() . "</th><tr>";
+
+                                echo
+                                "<tr>"
+                                . "<td><a href='messages.php?id=" . $sendMessage->getId() . "'>" . substr($sendMessage->getTextMessage(), 0, 30) . " ..." . "</a></td><td>" . $status . "</td>"
+                                . "</tr>";
+                            }
+                        } else {
+                            echo "Your message box is empty";
+                        }
+                        echo "</table>";
+                    }
+                    ?>
                 </div>
             </div>
             <hr>
-        </div>  
+        </div>    
         <footer>
             <div class="container">
                 <div class="row">
@@ -176,6 +169,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </footer>
-
     </body>
 </html>

@@ -9,21 +9,22 @@ if (isset($_SESSION['id']) && isset($_SESSION['email'])) {
 }
 //odbieram dane z fromularza i zapisuje do bazy danych 
 
-if ($userSelected != null) {
+
+if (!empty($_POST['tweet'])) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (!empty($_POST['tweet'])) {
+        if ($userSelected != null) {
 
             $tweet = new tweet();
             $tweet->setUserId($_SESSION['id']);
             $tweet->setText($_POST['tweet']);
             $tweet->save();
         } else {
-            
+            echo "Zaloguj się aby móc dodawać tweety";
+            header("Refresh:1; url=index.php");
         }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -32,115 +33,117 @@ if ($userSelected != null) {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="">
         <meta name="author" content="">
+        <!--        <link rel="stylesheet" href="css/style.css">-->
 
         <title>Twitter</title>
         <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 
     </head>
     <body>
-        <nav class="navbar-custom navbar-fixed-top">
+        <nav class="navbar navbar-inverse navbar-fixed-top">
             <div class="container-fluid">
+                <div class="navbar-header">                                    
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#"> Twitter - my page</a>
+                </div>
+
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+                    <?php if ($userSelected) { ?>
+                        <ul class="nav navbar-nav">
+                            <li class=""><?php
+                                echo
+                                "<a href='pages/user.php?id=" . $userSelected->getId() . "'>"
+                                . "<span class='glyphicon glyphicon-user'></span> Profile</a>"
+                                ?>
+                            </li>
+                            <li class=""><?php
+                                echo
+                                "<a href='pages/user.php?id=" . $userSelected->getId() . "'> "
+                                . "You are loged as: " . $userSelected->getUsername() . "</a>";
+                                ?>
+                            </li>
+
+                        </ul>
+                    <?php } ?>
                     <ul class="nav navbar-nav navbar-right">
                         <?php if (!$userSelected) { ?>
                             <li>
-                                <a href="pages/login.php">Login</a>
+                                <a href="pages/login.php"><span class="glyphicon glyphicon-log-in"></span> Login</a>
                             </li>
                             <li>
-                                <a href="pages/register.php">Register</a>
+                                <a href="pages/register.php"><span class="glyphicon glyphicon-user"></span> Register</a>
                             </li>
                         <?php } else { ?>
                             <li>
-                                <a href="pages/messages.php">Messages</a>
+                                <a href="pages/messages.php"><span class="glyphicon glyphicon-envelope"></span> Messages</a>
                             </li>
                             <li>
-                                <a href="pages/settings.php">Settings</a>
+                                <a href="pages/settings.php"><span class="glyphicon glyphicon-cog"></span> Settings</a>
                             </li>
                             <li>
-                                <a href="pages/logout.php">Logout</a>
+                                <a href="pages/logout.php"><span class="glyphicon glyphicon-log-out"></span> Logout</a>
                             </li>
                         <?php } ?>
                     </ul>
                 </div>
             </div>
         </nav>
-        <header class="intro-header" >
-            <div class="container">
-                <div class="row">
-                    <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                        <div class="site-heading">
-                            <h1>Twitter - Main Page</h1>
-                        </div>
+        <hr>
+        <div class= "jumbotron">
+            <div class="container page-header text-center">
+                <h1>Welcome to my weebsite</h1>
+                <form action="index.php" method="POST" role="form" >
+                    <div class="col-sm-12">
+                        <label for="tweet"></label>
+                        <input type="text"  class="form-control input-lg" name="tweet" id="tweet" maxlength="140"
+                               placeholder="Write your tweet....."><br>
+                        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;"><span class="glyphicon glyphicon-share"></span> Shere</button>
                     </div>
-                </div>
+
+                </form>
             </div>
-        </header>
+        </div>    
         <hr>
-        <?php
-        if ($userSelected != null) {
-            ?>
-            <div class="container">
-                <div class="row">
-                    <div class="col-sm-8">
-
-                    </div>
-                    <div class="col-sm-8">
-                        <form action="index.php" method="POST" role="form" >
-                            <label for="tweet">Tweet:</label>
-                            <input type="text"  class="form-control" name="tweet" id="tweet" maxlength="140"
-                                   placeholder="Write your tweet.....">                  
-                            <button type="submit" class="btn btn-success">Send</button>
-                        </form>
-                    </div>
-                    <div class="col-sm-8">
-
-                    </div>
-                </div>
-            </div>    
-        <?php } ?>   
-        <hr>
-
         <div class="container">
             <div class="row">
                 <div class="col-sm-12">
-                    <h3>All yours tweets</h3>
+                    <h3>All tweets</h3>
                 </div>
-                <div class="col-sm-10 ">
+                <div class="col-sm-12 ">
                     <table class="table table-hover">
                         <?php
-                        if ($userSelected != null) {
-                            $allLoadedTweets = tweet::loadAll();
+                        $allLoadedTweets = tweet::loadAll();
 
-                            foreach ($allLoadedTweets as $tweet) {
-                                $user = user::loadById($tweet->getUserId());
-                                echo "<tr>"
-                                . "<th><a href='pages/profile.php?id=" . $user->getId() . "'>" . $user->getUsername() . "</a></th>"
-                                . "<th>" . $user->getEmail() . "</th>"
-                                . "</tr>";
+                        foreach ($allLoadedTweets as $tweet) {
+                            $user = user::loadById($tweet->getUserId());
+                            echo "<tr>"
+                            . "<th><a href='pages/user.php?id=" . $user->getId() . "'>" . $user->getUsername() . "</a></th>"
+                            . "<th>" . $user->getEmail() . "</th>"
+                            . "</tr>";
 
-                                echo
-                                "<tr>"
-                                . "<td><a href='pages/tweet.php?id=" . $tweet->getId() . "'>Tweet: " . $tweet->getText() . "</a></td>"
-                                . "<td>" . $tweet->getCreationDate() . "</td>"
-                                . "</tr>";
-                            }
+                            echo
+                            "<tr>"
+                            . "<td><a href='pages/tweet.php?id=" . $tweet->getId() . "'>" . $tweet->getText() . "</a></td>"
+                            . "<td>" . $tweet->getCreationDate() . "</td>"
+                            . "</tr>";
                         }
                         ?> 
                     </table>
                 </div>
-                <div class="col-sm-4">
-
-                </div>
             </div>
+            <hr>
         </div>    
-
-
-        <hr>
         <footer>
             <div class="container">
                 <div class="row">
-                    <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
-                        <p class="copyright text-muted">Copyright &copy; Twitter simillar wesite</p>
+                    <div class=" text-center col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                        <p class="copyright text-muted">Copyright &copy; Twitter simillar website - Created by Łukasz Materla</p>
                     </div>
                 </div>
             </div>

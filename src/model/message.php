@@ -1,8 +1,5 @@
 <?php
 
-//include_once('src/util/db.php');
-//include_once('src/abstract/activeRecord.php');
-
 class message extends activeRecord {
 
     private $senderId;

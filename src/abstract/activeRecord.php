@@ -1,21 +1,26 @@
 <?php
-//include_once('src/interface/activeRecord.php');
 
-abstract class activeRecord implements activeRecordInterface {
+abstract class activeRecord implements activeRecordInterface
+{
     protected $id;
     protected static $db;
-    public function __construct(){
+
+    public function __construct()
+    {
         self::connect();
         $this->id = -1;
     }
 
-    public static function connect(){
-        if(!self::$db){
+    public static function connect()
+    {
+        if (!self::$db) {
             self::$db = new db();
             self::$db->changeDB('twitter');
         }
         return true;
     }
 
-    public function save(){}
+    public function save()
+    {
+    }
 }

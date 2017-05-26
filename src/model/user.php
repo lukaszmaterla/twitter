@@ -1,50 +1,57 @@
 <?php
 
-//include_once('src/util/db.php');
-//include_once('src/abstract/activeRecord.php');
-
-class user extends activeRecord {
+class user extends activeRecord
+{
 
     private $username;
     private $email;
     private $passwordHash;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->email = '';
         $this->username = '';
         $this->passwordHash = '';
     }
 
-    public function getId() {
+    public function getId()
+    {
         return $this->id;
     }
 
-    public function getUsername() {
+    public function getUsername()
+    {
         return $this->username;
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->email;
     }
 
-    public function getPasswordHash() {
+    public function getPasswordHash()
+    {
         return $this->passwordHash;
     }
 
-    public function setUsername($username) {
+    public function setUsername($username)
+    {
         $this->username = $username;
     }
 
-    public function setEmail($email) {
+    public function setEmail($email)
+    {
         $this->email = $email;
     }
 
-    public function setPasswordHash($passwordHash) {
+    public function setPasswordHash($passwordHash)
+    {
         $this->passwordHash = md5($passwordHash);
     }
 
-    public function save() {
+    public function save()
+    {
         if (self::$db->conn != null) {
             if ($this->id == -1) {
                 $sql = "INSERT INTO users (username, email, passwordHash) values ('$this->username', '$this->email', '$this->passwordHash')";
@@ -72,11 +79,12 @@ class user extends activeRecord {
         return false;
     }
 
-    static public function loadById($id) {
+    static public function loadById($id)
+    {
         self::connect();
         $sql = "SELECT * FROM users WHERE id=:id";
         $stmt = self::$db->conn->prepare($sql);
-        $result= $stmt->execute(['id' => $id]);
+        $result = $stmt->execute(['id' => $id]);
         if ($result && $stmt->rowCount() == 1) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $loadedUser = new User();
@@ -89,7 +97,8 @@ class user extends activeRecord {
         return null;
     }
 
-    static public function loadByEmail($email) {
+    static public function loadByEmail($email)
+    {
         self::connect();
         $sql = "SELECT * FROM users WHERE email=:email";
         $stmt = self::$db->conn->prepare($sql);
@@ -106,7 +115,8 @@ class user extends activeRecord {
         return null;
     }
 
-    static public function loadByUsername($username) {
+    static public function loadByUsername($username)
+    {
         self::connect();
         $sql = "SELECT * FROM users WHERE username=:username";
         $stmt = self::$db->conn->prepare($sql);
@@ -123,7 +133,8 @@ class user extends activeRecord {
         return null;
     }
 
-    static public function loadAll() {
+    static public function loadAll()
+    {
         self::connect();
         $sql = "SELECT * FROM users";
         $returnTable = [];
@@ -140,7 +151,8 @@ class user extends activeRecord {
         return $returnTable;
     }
 
-    public function delete() {
+    public function delete()
+    {
         if ($this->id != -1) {
             if (self::$db->conn->query("DELETE FROM users WHERE id=$this->id")) {
                 $this->id = -1;
